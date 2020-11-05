@@ -55,7 +55,7 @@ class Slide:
         for shape in shapes:
             if shape.Type == 16:
                 if shape.MediaType == 3:
-                    videos.append(ShapeVideo(shape))
+                    videos.append(ShapeVideo(self, shape))
         return videos
 
     def get_audio(self):
@@ -65,7 +65,7 @@ class Slide:
         for shape in shapes:
             if shape.Type == 16:
                 if shape.MediaType == 2:
-                    audios.append(ShapeAudio(shape))
+                    audios.append(ShapeAudio(self, shape))
         return audios
 
     def get_background(self):
@@ -92,6 +92,28 @@ class FrameText:
         print(self)
 
 
+class ShapeMedia:
+    def __init__(self, slide, shape_com_object):
+        self.slide = slide
+        self.shape_com_object = shape_com_object
+
+    def change_media(self, path, left=None, top=None, width=None, height=None):
+        if not left:
+            left = self.shape_com_object.Left
+        if not top:
+            top = self.shape_com_object.Top
+        if not width:
+            width = self.shape_com_object.Width
+        if not height:
+            height = self.shape_com_object.Height
+        self.shape_com_object.Delete()
+        self.slide.slide_com_object.Shapes.AddMediaObject(FileName=path,
+                                                          Left=left,
+                                                          Top=top,
+                                                          Width=width,
+                                                          Height=height)
+
+
 class ShapeImage:
     def __init__(self, slide, shape_com_object):
         self.slide = slide
@@ -107,20 +129,23 @@ class ShapeImage:
             width = self.shape_com_object.Width
         if not height:
             height = self.shape_com_object.Height
-        self.shape_com_object.Delete
+        self.shape_com_object.Delete()
         self.slide.slide_com_object.Shapes.AddPicture(FileName=image_path,
                                                       LinkToFile=False,
-                                                      SaveWithDocument=False,
+                                                      SaveWithDocument=True,
                                                       Left=left,
                                                       Top=top,
                                                       Width=width,
                                                       Height=height)
 
 
+class ShapeVideo(ShapeMedia):
+    def __init__(self, slide, shape_com_object):
+        super().__init__(slide, shape_com_object)
 
-class ShapeVideo:
-    def __init__(self, shape_com_object):
-        self.shape_com_object = shape_com_object
+    def change_video(self, video_path, left=None, top=None, width=None, height=None):
+        logger.info('Изменение видео в {} слайде'.format(self.slide.id))
+        self.change_media(video_path, left, top, width, height)
 
 
 class FillBackground:
@@ -128,9 +153,13 @@ class FillBackground:
         self.fill_com_object = fill_com_object
 
 
-class ShapeAudio:
-    def __init__(self, shape_com_object):
-        self.shape_com_object = shape_com_object
+class ShapeAudio(ShapeMedia):
+    def __init__(self, slide, shape_com_object):
+        super().__init__(slide, shape_com_object)
+
+    def change_audio(self, audio_path, left=None, top=None, width=None, height=None):
+        logger.info('Изменение аудио в {} слайде'.format(self.slide.id))
+        self.change_media(audio_path, left, top, width, height)
 
 
 class PPT:
@@ -149,8 +178,8 @@ class PPT:
         self.app.Quit()
 
     def duplicate_slide(self, index_slide, index_copy_place):
-        logger.info('Копирование слайда №{} на место слайда №{}'.format(index_slide + 1, index_copy_place + 1))
-        self.ppt_com_object.Slides[index_slide].Copy
+        logger.info('Копирование слайда №{} на место слайда №{}'.format(index_slide, index_copy_place))
+        self.ppt_com_object.Slides[index_slide - 1].Copy()
         self.ppt_com_object.Slides.Paste(index_copy_place)
 
     def save_as(self, file_name):
