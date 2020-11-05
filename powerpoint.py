@@ -1,5 +1,6 @@
 import win32com.client
 import logging
+from pptx import Presentation
 
 PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Fashion.pptx'
 PPT_CHANGED_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\new.pptx'
@@ -18,21 +19,26 @@ logger.addHandler(console_headler)
 
 
 class Slide:
+    SPEED = {
+        1: 'Медленно',
+        2: 'Средне',
+        3: 'Быстро',
+    }
+
     def __init__(self, slide_com_object):
         self.slide_com_object = slide_com_object
+        self.shapes = self.slide_com_object.Shapes
         self.id = self.slide_com_object.SlideIndex
         self.texts = self.get_texts()
         self.images = self.get_pictures()
         self.videos = self.get_videos()
-        self.background = self.get_background()
         self.audio = self.get_audio()
-        self.time_slide = self.get_time_slide()
+        self.speed = self.get_speed()
 
     def get_texts(self) -> list:
         logger.info('Получение текстовой информации слайда №{}'.format(self.id))
-        shapes = self.slide_com_object.Shapes
         text_frames = []
-        for shape in shapes:
+        for shape in self.shapes:
             if shape.Type == 17:
                 text_frame = shape.TextFrame
                 if text_frame.HasText:
@@ -41,18 +47,16 @@ class Slide:
 
     def get_pictures(self) -> list:
         logger.info('Получение картинок слайда №{}'.format(self.id))
-        shapes = self.slide_com_object.Shapes
         images = []
-        for shape in shapes:
+        for shape in self.shapes:
             if shape.Type == 14:
                 images.append(ShapeImage(self, shape))
         return images
 
     def get_videos(self):
         logger.info('Получение видео слайда №{}'.format(self.id))
-        shapes = self.slide_com_object.Shapes
         videos = []
-        for shape in shapes:
+        for shape in self.shapes:
             if shape.Type == 16:
                 if shape.MediaType == 3:
                     videos.append(ShapeVideo(self, shape))
@@ -60,21 +64,23 @@ class Slide:
 
     def get_audio(self):
         logger.info('Получение аудио слайда №{}'.format(self.id))
-        shapes = self.slide_com_object.Shapes
         audios = []
-        for shape in shapes:
+        for shape in self.shapes:
             if shape.Type == 16:
                 if shape.MediaType == 2:
                     audios.append(ShapeAudio(self, shape))
         return audios
 
-    def get_background(self):
-        logger.info('Получение фона слайда №{}'.format(self.id))
-        return FillBackground(self.slide_com_object.Background.Fill)
+    def change_speed(self, speed):
+        logger.info('Изменение скоррости слайда №{} с {} на {} '.format(self.id,
+                                                                        self.speed,
+                                                                        self.SPEED[speed]))
+        self.slide_com_object.SlideShowTransition.Speed = speed
+        print(self.slide_com_object.SlideShowTransition.Speed)
 
-    def get_time_slide(self):
+    def get_speed(self):
         logger.info('Получение продолжительности слайда №{}'.format(self.id))
-        return self.slide_com_object.SlideShowTransition.Speed
+        return self.SPEED[self.slide_com_object.SlideShowTransition.Speed]
 
 
 class FrameText:
@@ -107,11 +113,11 @@ class ShapeMedia:
         if not height:
             height = self.shape_com_object.Height
         self.shape_com_object.Delete()
-        self.slide.slide_com_object.Shapes.AddMediaObject(FileName=path,
-                                                          Left=left,
-                                                          Top=top,
-                                                          Width=width,
-                                                          Height=height)
+        self.slide.shapes.AddMediaObject(FileName=path,
+                                         Left=left,
+                                         Top=top,
+                                         Width=width,
+                                         Height=height)
 
 
 class ShapeImage:
@@ -119,24 +125,20 @@ class ShapeImage:
         self.slide = slide
         self.shape_com_object = shape_com_object
 
-    def change_image(self, image_path, left=None, top=None, width=None, height=None):
+    def change_image(self, image_path):
         logger.info('Изменение изображения в {} слайде'.format(self.slide.id))
-        if not left:
-            left = self.shape_com_object.Left
-        if not top:
-            top = self.shape_com_object.Top
-        if not width:
-            width = self.shape_com_object.Width
-        if not height:
-            height = self.shape_com_object.Height
+        left = self.shape_com_object.Left
+        top = self.shape_com_object.Top
+        width = self.shape_com_object.Width
+        height = self.shape_com_object.Height
         self.shape_com_object.Delete()
-        self.slide.slide_com_object.Shapes.AddPicture(FileName=image_path,
-                                                      LinkToFile=False,
-                                                      SaveWithDocument=True,
-                                                      Left=left,
-                                                      Top=top,
-                                                      Width=width,
-                                                      Height=height)
+        self.slide.shapes.AddPicture(FileName=image_path,
+                                     LinkToFile=False,
+                                     SaveWithDocument=True,
+                                     Left=left,
+                                     Top=top,
+                                     Width=width,
+                                     Height=height)
 
 
 class ShapeVideo(ShapeMedia):
@@ -146,11 +148,6 @@ class ShapeVideo(ShapeMedia):
     def change_video(self, video_path, left=None, top=None, width=None, height=None):
         logger.info('Изменение видео в {} слайде'.format(self.slide.id))
         self.change_media(video_path, left, top, width, height)
-
-
-class FillBackground:
-    def __init__(self, fill_com_object):
-        self.fill_com_object = fill_com_object
 
 
 class ShapeAudio(ShapeMedia):
@@ -185,3 +182,10 @@ class PPT:
     def save_as(self, file_name):
         logger.info('Сохранение слайда {}'.format(file_name))
         self.ppt_com_object.SaveAs(file_name)
+
+
+class PPTColors:
+    def __init__(self, ppt_path):
+        logger.info('Открытие презентации {}'.format(ppt_path))
+        self.ppt = Presentation(pptx=ppt_path)
+        print(self.ppt.slides[0])
