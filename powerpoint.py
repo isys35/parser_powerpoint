@@ -3,6 +3,8 @@ import logging
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from PIL import ImageColor
+import os
+
 
 PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Fashion.pptx'
 PPT_CHANGED_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\new.pptx'
@@ -27,14 +29,15 @@ class Slide:
         3: 'Быстро',
     }
 
-    def __init__(self, slide_com_object):
+    def __init__(self, ppt, slide_com_object):
+        self.ppt = ppt
         self.slide_com_object = slide_com_object
         self.shapes = self.slide_com_object.Shapes
         self.id = self.slide_com_object.SlideIndex
         self.texts = self.get_texts()
         self.images = self.get_pictures()
         self.videos = self.get_videos()
-        self.audio = self.get_audio()
+        self.audios = self.get_audios()
         self.speed = self.get_speed()
 
     def get_texts(self) -> list:
@@ -64,7 +67,7 @@ class Slide:
                     videos.append(ShapeVideo(self, shape))
         return videos
 
-    def get_audio(self):
+    def get_audios(self):
         logger.info('Получение аудио слайда №{}'.format(self.id))
         audios = []
         for shape in self.shapes:
@@ -83,6 +86,15 @@ class Slide:
     def get_speed(self):
         logger.info('Получение продолжительности слайда №{}'.format(self.id))
         return self.SPEED[self.slide_com_object.SlideShowTransition.Speed]
+
+    def change_background_color(self, rgb_touple):
+        file = os.path.dirname(__file__) + '\_.pptx'
+        file_2 = os.path.dirname(__file__) + '\__.pptx'
+        self.ppt.save_as(file)
+        ppt_with_changing_colors = PPTColors(file)
+        ppt_with_changing_colors.slides[self.id-1].change_background_color(rgb_touple)
+        ppt_with_changing_colors.save_as(file_2)
+        self.ppt.__init__(file_2)
 
 
 class FrameText:
@@ -168,10 +180,11 @@ class PPT:
         self.ppt_path = ppt_path
         self.ppt_com_object = self.app.Presentations.Open(self.ppt_path)
         self.slides = self.get_slides()
+        self.ppt_pptx_python_object = PPTColors(ppt_path)
 
     def get_slides(self) -> list:
         logger.info('Получение слайдов')
-        return [Slide(slide_com_object) for slide_com_object in self.ppt_com_object.Slides]
+        return [Slide(self, slide_com_object) for slide_com_object in self.ppt_com_object.Slides]
 
     def close(self):
         self.app.Quit()
@@ -184,6 +197,31 @@ class PPT:
     def save_as(self, file_name):
         logger.info('Сохранение презентации {}'.format(file_name))
         self.ppt_com_object.SaveAs(file_name)
+
+    def show_info(self):
+        info_main = 'Слайд #{}:'
+        info_shade = '\tФормы : {}'
+        info_shade_color = '\tЦвета форм : {}'
+        info_background = '\tФон : {}'
+        info_text_blocks = '\tТекстовые блоки : {}'
+        info_pictures = '\tКартинки : {}'
+        info_videos = '\tВидео : {}'
+        info_audios = '\tАудио : {}'
+        info_speed_slide = '\tСкорость слайда: {}'
+        for slide_index in range(len(self.slides)):
+            print(info_main.format(slide_index+ 1))
+            print(info_shade.format([shape.type for shape in self.ppt_pptx_python_object.slides[slide_index].shapes]))
+            print(info_shade_color.format([shape.color for shape in self.ppt_pptx_python_object.slides[slide_index].shapes]))
+            print(info_background.format('тип - {}, цвет - {}'.format(self.ppt_pptx_python_object.slides[slide_index].background,
+                                                                       self.ppt_pptx_python_object.slides[slide_index].background_color)))
+            print(info_text_blocks.format([str(text)[:4]+'...' for text in self.slides[slide_index].texts]))
+            print(info_pictures.format(
+                ['img' + str(image_index) for image_index in range(len(self.slides[slide_index].images))]))
+            print(info_videos.format(
+                ['video' + str(video_index) for video_index in range(len(self.slides[slide_index].videos))]))
+            print(info_audios.format(
+                ['audio' + str(audio_index) for audio_index in range(len(self.slides[slide_index].audios))]))
+            print(info_speed_slide.format(self.slides[slide_index].speed))
 
 
 class SlideColors:
@@ -262,13 +300,3 @@ class PPTColors:
         logger.info('Сохранение презентации {}'.format(file_name))
         self.ppt.save(file_name)
 
-    def show_info(self):
-        info_main = 'Слайд #{}:'
-        info_shade = '\tФормы : {}'
-        info_shade_color = '\tЦвета форм : {}'
-        info_background = '\tФон : {}'
-        for slide in self.slides:
-            print(info_main.format(self.slides.index(slide) + 1))
-            print(info_shade.format([shape.type for shape in slide.shapes]))
-            print(info_shade_color.format([shape.color for shape in slide.shapes]))
-            print(info_background.format('[тип : {}, цвет: {}]'.format(slide.background, slide.background_color)))

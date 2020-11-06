@@ -12,15 +12,16 @@ PPT_CHANGED_PATH = r'D:\Projects\commerce\parser_powerpoint\init_pptx\new.pptx' 
 
 def show_info():
     """пример который показывает информацию о презентации"""
-    ppt = PPTColors(PPT_CHANGED_PATH)
+    ppt = PPT(PPT_CHANGED_PATH)
     ppt.show_info()
 
 
 def change_background_color():
     """пример изменения цвета фона 1 слайда на красный"""
-    ppt = PPTColors(PPT_PATH)
+    ppt = PPT(PPT_PATH)
     red = (255, 0, 0)
     ppt.slides[0].change_background_color(red)
+    # ppt.slides[1].change_background_color(red)
     ppt.save_as(PPT_CHANGED_PATH)
 
 
@@ -61,7 +62,7 @@ def change_audio_example():
     """пример изменения первого аудио в 1 слайде"""
     ppt = PPT(PPT_PATH)
     audio_path = r'D:\Project\commerce\parser_powerpoint\audio.mp3'
-    ppt.slides[0].audio[0].change_audio(audio_path)
+    ppt.slides[0].audios[0].change_audio(audio_path)
     ppt.save_as(PPT_CHANGED_PATH)
     ppt.close()
 
@@ -91,5 +92,4 @@ def change_speed_example():
 
 
 if __name__ == '__main__':
-    change_shape_color()
-    show_info()
+    change_background_color()
