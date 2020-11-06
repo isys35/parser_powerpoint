@@ -1,36 +1,34 @@
-from powerpoint import PPT, PPTColors
+from powerpoint import PPT
+import win32api
 
-PPT_PATH = r'D:\Projects\commerce\parser_powerpoint\init_pptx\Fashion.pptx'  # исходник
-PPT_CHANGED_PATH = r'D:\Projects\commerce\parser_powerpoint\init_pptx\new.pptx'  # изменённый файл
-
-"""
-Для изменения цветов используется другой модуль,
-т.е отрыть презентацию и одновременно изменить и текст и цвет не получится,
-но можно открыть перзентацию изменить текст, сохранить, потом снова открыть и изменить цвета
-"""
+PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Fashion.pptx'  # исходник
+PPT_CHANGED_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\new.pptx'  # изменённый файл
 
 
 def show_info():
     """пример который показывает информацию о презентации"""
     ppt = PPT(PPT_CHANGED_PATH)
     ppt.show_info()
+    ppt.quit()
 
 
 def change_background_color():
-    """пример изменения цвета фона 1 слайда на красный"""
+    """пример изменения цвета фона 1 b 2-го слайда на красный"""
     ppt = PPT(PPT_PATH)
     red = (255, 0, 0)
     ppt.slides[0].change_background_color(red)
-    # ppt.slides[1].change_background_color(red)
+    ppt.slides[1].change_background_color(red)
     ppt.save_as(PPT_CHANGED_PATH)
+    ppt.quit()
 
 
 def change_shape_color():
     """пример изменения цвета формы на 3 слайде 4 формы на зелёный"""
-    ppt = PPTColors(PPT_PATH)
+    ppt = PPT(PPT_PATH)
     green = (0, 255, 0)
     ppt.slides[2].shapes[3].change_color(green)
     ppt.save_as(PPT_CHANGED_PATH)
+    ppt.quit()
 
 
 def duplicate_slide():
@@ -38,7 +36,7 @@ def duplicate_slide():
     ppt = PPT(PPT_PATH)
     ppt.duplicate_slide(3, 5)
     ppt.save_as(PPT_CHANGED_PATH)
-    ppt.close()
+    ppt.quit()
 
 
 def change_text_example():
@@ -46,16 +44,16 @@ def change_text_example():
     ppt = PPT(PPT_PATH)
     ppt.slides[2].texts[0].change_text('ИЗМЕНЁННЫЙ ТЕКСТ')
     ppt.save_as(PPT_CHANGED_PATH)
-    ppt.close()
+    ppt.quit()
 
 
 def change_image_example():
     """пример изменения первого изображения блока в 2 слайде"""
     ppt = PPT(PPT_PATH)
-    image_path = r'D:\Project\commerce\parser_powerpoint\image.jpg'
+    image_path = r'D:\Project\commerce\parser_powerpoint\image.png'
     ppt.slides[1].images[0].change_image(image_path)
     ppt.save_as(PPT_CHANGED_PATH)
-    ppt.close()
+    ppt.quit()
 
 
 def change_audio_example():
@@ -64,7 +62,7 @@ def change_audio_example():
     audio_path = r'D:\Project\commerce\parser_powerpoint\audio.mp3'
     ppt.slides[0].audios[0].change_audio(audio_path)
     ppt.save_as(PPT_CHANGED_PATH)
-    ppt.close()
+    ppt.quit()
 
 
 def change_video_example():
@@ -73,7 +71,7 @@ def change_video_example():
     video_path = r'D:\Project\commerce\parser_powerpoint\video.avi'
     ppt.slides[1].videos[0].change_video(video_path)
     ppt.save_as(PPT_CHANGED_PATH)
-    ppt.close()
+    ppt.quit()
 
 
 def change_speed_example():
@@ -88,8 +86,30 @@ def change_speed_example():
     speed_id = 1
     ppt.slides[0].change_speed(speed_id)
     ppt.save_as(PPT_CHANGED_PATH)
-    ppt.close()
+    ppt.quit()
+
+
+def change_all_example():
+    ppt = PPT(PPT_PATH)
+    red = (255, 0, 0)
+    green = (0, 255, 0)
+    ppt.slides[0].change_background_color(red)
+    ppt.slides[1].change_background_color(red)
+    ppt.slides[2].shapes[3].change_color(green)
+    ppt.slides[2].texts[0].change_text('ИЗМЕНЁННЫЙ ТЕКСТ')
+    image_path = r'D:\Project\commerce\parser_powerpoint\image.png'
+    ppt.slides[1].images[0].change_image(image_path)
+    audio_path = r'D:\Project\commerce\parser_powerpoint\audio.mp3'
+    ppt.slides[0].audios[0].change_audio(audio_path)
+    video_path = r'D:\Project\commerce\parser_powerpoint\video.avi'
+    ppt.slides[1].videos[0].change_video(video_path)
+    speed_id = 1
+    ppt.slides[0].change_speed(speed_id)
+    ppt.duplicate_slide(3, 5)
+    ppt.show_info()
+    ppt.save_as(PPT_CHANGED_PATH)
+    ppt.quit()
 
 
 if __name__ == '__main__':
-    change_background_color()
+    change_audio_example()

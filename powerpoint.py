@@ -5,7 +5,6 @@ from pptx.dml.color import RGBColor
 from PIL import ImageColor
 import os
 
-
 PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Fashion.pptx'
 PPT_CHANGED_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\new.pptx'
 
@@ -32,7 +31,7 @@ class Slide:
     def __init__(self, ppt, slide_com_object):
         self.ppt = ppt
         self.slide_com_object = slide_com_object
-        self.shapes = self.slide_com_object.Shapes
+        self.shapes = [Shape(self, shape) for shape in self.slide_com_object.Shapes]
         self.id = self.slide_com_object.SlideIndex
         self.texts = self.get_texts()
         self.images = self.get_pictures()
@@ -89,12 +88,39 @@ class Slide:
 
     def change_background_color(self, rgb_touple):
         file = os.path.dirname(__file__) + '\_.pptx'
-        file_2 = os.path.dirname(__file__) + '\__.pptx'
         self.ppt.save_as(file)
+        self.ppt.close()
         ppt_with_changing_colors = PPTColors(file)
-        ppt_with_changing_colors.slides[self.id-1].change_background_color(rgb_touple)
-        ppt_with_changing_colors.save_as(file_2)
-        self.ppt.__init__(file_2)
+        ppt_with_changing_colors.slides[self.id - 1].change_background_color(rgb_touple)
+        ppt_with_changing_colors.save_as(file)
+        self.ppt.__init__(file)
+
+
+class Shape:
+    def __init__(self, slide, shape_object):
+        self.slide = slide
+        self.shape_object = shape_object
+        self.Type = shape_object.Type
+        self.MediaType = None
+        if self.Type == 16:
+            self.MediaType = shape_object.MediaType
+        self.TextFrame = None
+        if self.Type == 17:
+            self.TextFrame = shape_object.TextFrame
+        self.Left = shape_object.Left
+        self.Top = shape_object.Top
+        self.Width = shape_object.Width
+        self.Height = shape_object.Height
+        self.Delete = shape_object.Delete
+
+    def change_color(self, rgb_tuple):
+        file = os.path.dirname(__file__) + '\_.pptx'
+        self.slide.ppt.save_as(file)
+        self.slide.ppt.close()
+        ppt_with_changing_colors = PPTColors(file)
+        ppt_with_changing_colors.slides[self.slide.id - 1].shapes[self.slide.shapes.index(self)].change_color(rgb_tuple)
+        ppt_with_changing_colors.save_as(file)
+        self.slide.ppt.__init__(file)
 
 
 class FrameText:
@@ -113,51 +139,52 @@ class FrameText:
 
 
 class ShapeMedia:
-    def __init__(self, slide, shape_com_object):
+    def __init__(self, slide, shape):
         self.slide = slide
-        self.shape_com_object = shape_com_object
+        self.shape = shape
 
     def change_media(self, path, left=None, top=None, width=None, height=None):
         if not left:
-            left = self.shape_com_object.Left
+            left = self.shape.Left
         if not top:
-            top = self.shape_com_object.Top
+            top = self.shape.Top
         if not width:
-            width = self.shape_com_object.Width
+            width = self.shape.Width
         if not height:
-            height = self.shape_com_object.Height
-        self.shape_com_object.Delete()
-        self.slide.shapes.AddMediaObject(FileName=path,
-                                         Left=left,
-                                         Top=top,
-                                         Width=width,
-                                         Height=height)
+            height = self.shape.Height
+        self.shape.Delete()
+        print(self.slide.audios)
+        self.slide.slide_com_object.Shapes.AddMediaObject(FileName=path,
+                                                          Left=left,
+                                                          Top=top,
+                                                          Width=width,
+                                                          Height=height)
 
 
 class ShapeImage:
-    def __init__(self, slide, shape_com_object):
+    def __init__(self, slide, shape):
         self.slide = slide
-        self.shape_com_object = shape_com_object
+        self.shape = shape
 
     def change_image(self, image_path):
         logger.info('Изменение изображения в {} слайде'.format(self.slide.id))
-        left = self.shape_com_object.Left
-        top = self.shape_com_object.Top
-        width = self.shape_com_object.Width
-        height = self.shape_com_object.Height
-        self.shape_com_object.Delete()
-        self.slide.shapes.AddPicture(FileName=image_path,
-                                     LinkToFile=False,
-                                     SaveWithDocument=True,
-                                     Left=left,
-                                     Top=top,
-                                     Width=width,
-                                     Height=height)
+        left = self.shape.Left
+        top = self.shape.Top
+        width = self.shape.Width
+        height = self.shape.Height
+        self.shape.Delete()
+        self.slide.slide_com_object.Shapes.AddPicture(FileName=image_path,
+                                                      LinkToFile=False,
+                                                      SaveWithDocument=True,
+                                                      Left=left,
+                                                      Top=top,
+                                                      Width=width,
+                                                      Height=height)
 
 
 class ShapeVideo(ShapeMedia):
-    def __init__(self, slide, shape_com_object):
-        super().__init__(slide, shape_com_object)
+    def __init__(self, slide, shape):
+        super().__init__(slide, shape)
 
     def change_video(self, video_path, left=None, top=None, width=None, height=None):
         logger.info('Изменение видео в {} слайде'.format(self.slide.id))
@@ -165,8 +192,8 @@ class ShapeVideo(ShapeMedia):
 
 
 class ShapeAudio(ShapeMedia):
-    def __init__(self, slide, shape_com_object):
-        super().__init__(slide, shape_com_object)
+    def __init__(self, slide, shape):
+        super().__init__(slide, shape)
 
     def change_audio(self, audio_path, left=None, top=None, width=None, height=None):
         logger.info('Изменение аудио в {} слайде'.format(self.slide.id))
@@ -187,6 +214,9 @@ class PPT:
         return [Slide(self, slide_com_object) for slide_com_object in self.ppt_com_object.Slides]
 
     def close(self):
+        self.ppt_com_object.Close()
+
+    def quit(self):
         self.app.Quit()
 
     def duplicate_slide(self, index_slide, index_copy_place):
@@ -209,12 +239,14 @@ class PPT:
         info_audios = '\tАудио : {}'
         info_speed_slide = '\tСкорость слайда: {}'
         for slide_index in range(len(self.slides)):
-            print(info_main.format(slide_index+ 1))
+            print(info_main.format(slide_index + 1))
             print(info_shade.format([shape.type for shape in self.ppt_pptx_python_object.slides[slide_index].shapes]))
-            print(info_shade_color.format([shape.color for shape in self.ppt_pptx_python_object.slides[slide_index].shapes]))
-            print(info_background.format('тип - {}, цвет - {}'.format(self.ppt_pptx_python_object.slides[slide_index].background,
-                                                                       self.ppt_pptx_python_object.slides[slide_index].background_color)))
-            print(info_text_blocks.format([str(text)[:4]+'...' for text in self.slides[slide_index].texts]))
+            print(info_shade_color.format(
+                [shape.color for shape in self.ppt_pptx_python_object.slides[slide_index].shapes]))
+            print(info_background.format(
+                'тип - {}, цвет - {}'.format(self.ppt_pptx_python_object.slides[slide_index].background,
+                                             self.ppt_pptx_python_object.slides[slide_index].background_color)))
+            print(info_text_blocks.format([str(text)[:4] + '...' for text in self.slides[slide_index].texts]))
             print(info_pictures.format(
                 ['img' + str(image_index) for image_index in range(len(self.slides[slide_index].images))]))
             print(info_videos.format(
@@ -299,4 +331,3 @@ class PPTColors:
     def save_as(self, file_name):
         logger.info('Сохранение презентации {}'.format(file_name))
         self.ppt.save(file_name)
-
