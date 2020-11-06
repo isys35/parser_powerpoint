@@ -115,8 +115,10 @@ def change_all_example():
     ppt.duplicate_slide(3, 5)
     ppt.show_info()
     ppt.save_as(PPT_CHANGED_PATH)
+    video_path = 'D:\Project\commerce\parser_powerpoint\presentation.mp4'
+    ppt.create_video(video_path)
     ppt.quit()
 
 
 if __name__ == '__main__':
-    create_video_example()
+    change_all_example()
