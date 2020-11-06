@@ -89,6 +89,13 @@ def change_speed_example():
     ppt.quit()
 
 
+def create_video_example():
+    """премер создания видео"""
+    ppt = PPT(PPT_PATH)
+    video_path = 'D:\Project\commerce\parser_powerpoint\presentation.mp4'
+    ppt.create_video(video_path)
+
+
 def change_all_example():
     ppt = PPT(PPT_PATH)
     red = (255, 0, 0)
@@ -112,4 +119,4 @@ def change_all_example():
 
 
 if __name__ == '__main__':
-    change_audio_example()
+    create_video_example()

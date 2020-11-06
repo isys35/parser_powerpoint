@@ -32,6 +32,7 @@ class Slide:
         self.ppt = ppt
         self.slide_com_object = slide_com_object
         self.shapes = [Shape(self, shape) for shape in self.slide_com_object.Shapes]
+        self.shapes2 = self.slide_com_object.Shapes
         self.id = self.slide_com_object.SlideIndex
         self.texts = self.get_texts()
         self.images = self.get_pictures()
@@ -42,7 +43,7 @@ class Slide:
     def get_texts(self) -> list:
         logger.info('Получение текстовой информации слайда №{}'.format(self.id))
         text_frames = []
-        for shape in self.shapes:
+        for shape in self.slide_com_object.Shapes:
             if shape.Type == 17:
                 text_frame = shape.TextFrame
                 if text_frame.HasText:
@@ -52,7 +53,7 @@ class Slide:
     def get_pictures(self) -> list:
         logger.info('Получение картинок слайда №{}'.format(self.id))
         images = []
-        for shape in self.shapes:
+        for shape in self.slide_com_object.Shapes:
             if shape.Type == 14:
                 images.append(ShapeImage(self, shape))
         return images
@@ -60,7 +61,7 @@ class Slide:
     def get_videos(self):
         logger.info('Получение видео слайда №{}'.format(self.id))
         videos = []
-        for shape in self.shapes:
+        for shape in self.slide_com_object.Shapes:
             if shape.Type == 16:
                 if shape.MediaType == 3:
                     videos.append(ShapeVideo(self, shape))
@@ -69,7 +70,7 @@ class Slide:
     def get_audios(self):
         logger.info('Получение аудио слайда №{}'.format(self.id))
         audios = []
-        for shape in self.shapes:
+        for shape in self.slide_com_object.Shapes:
             if shape.Type == 16:
                 if shape.MediaType == 2:
                     audios.append(ShapeAudio(self, shape))
@@ -100,18 +101,6 @@ class Shape:
     def __init__(self, slide, shape_object):
         self.slide = slide
         self.shape_object = shape_object
-        self.Type = shape_object.Type
-        self.MediaType = None
-        if self.Type == 16:
-            self.MediaType = shape_object.MediaType
-        self.TextFrame = None
-        if self.Type == 17:
-            self.TextFrame = shape_object.TextFrame
-        self.Left = shape_object.Left
-        self.Top = shape_object.Top
-        self.Width = shape_object.Width
-        self.Height = shape_object.Height
-        self.Delete = shape_object.Delete
 
     def change_color(self, rgb_tuple):
         file = os.path.dirname(__file__) + '\_.pptx'
@@ -144,21 +133,16 @@ class ShapeMedia:
         self.shape = shape
 
     def change_media(self, path, left=None, top=None, width=None, height=None):
-        if not left:
-            left = self.shape.Left
-        if not top:
-            top = self.shape.Top
-        if not width:
-            width = self.shape.Width
-        if not height:
-            height = self.shape.Height
+        left = self.shape.Left
+        top = self.shape.Top
+        width = self.shape.Width
+        height = self.shape.Height
         self.shape.Delete()
-        print(self.slide.audios)
-        self.slide.slide_com_object.Shapes.AddMediaObject(FileName=path,
-                                                          Left=left,
-                                                          Top=top,
-                                                          Width=width,
-                                                          Height=height)
+        media = self.slide.slide_com_object.Shapes.AddMediaObject2(FileName=path)
+        media.Left = left
+        media.Top = top
+        media.Width = width
+        media.Height = height
 
 
 class ShapeImage:
@@ -227,6 +211,15 @@ class PPT:
     def save_as(self, file_name):
         logger.info('Сохранение презентации {}'.format(file_name))
         self.ppt_com_object.SaveAs(file_name)
+
+    def create_video(self, mp4_target, resolution = 720,frames = 24,quality = 60):
+        if os.path.isfile(mp4_target):
+            os.remove(mp4_target)
+        logger.info('Сохранение видео презентации презентации {}'.format(mp4_target))
+        self.ppt_com_object.CreateVideo(mp4_target)
+        while True:
+            if os.path.isfile(mp4_target) and os.path.getsize(mp4_target) != 0:
+                break
 
     def show_info(self):
         info_main = 'Слайд #{}:'
