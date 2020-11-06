@@ -1,6 +1,8 @@
 import win32com.client
 import logging
 from pptx import Presentation
+from pptx.dml.color import RGBColor
+from PIL import ImageColor
 
 PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Fashion.pptx'
 PPT_CHANGED_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\new.pptx'
@@ -180,12 +182,93 @@ class PPT:
         self.ppt_com_object.Slides.Paste(index_copy_place)
 
     def save_as(self, file_name):
-        logger.info('Сохранение слайда {}'.format(file_name))
+        logger.info('Сохранение презентации {}'.format(file_name))
         self.ppt_com_object.SaveAs(file_name)
+
+
+class SlideColors:
+    FILL_TYPES = {
+        5: 'Прозрачный',
+        3: 'Градиент',
+        -2: 'Группа',
+        2: 'Шаблонн',
+        6: 'Картинка',
+        1: 'Заливка',
+        4: 'Текстура',
+    }
+
+    def __init__(self, slide_object):
+        self.slide_object = slide_object
+        self.id = self.slide_object.slide_id
+        self.shapes = [ShapeColors(shape) for shape in self.slide_object.shapes]
+        self.background = self.FILL_TYPES[self.slide_object.background.fill.type]
+        self.background_color = None
+        self.check_background_color()
+
+    def check_background_color(self):
+        if self.slide_object.background.fill.type == 1:
+            if self.slide_object.background.fill.fore_color.type == 1:
+                self.background_color = ImageColor.getcolor("#" + str(self.slide_object.background.fill.fore_color.rgb),
+                                                            "RGB")
+
+    def change_background_color(self, rgb_tuple):
+        logger.info('Изменение цвета фона {}  на цвет {}'.format(self.background_color, rgb_tuple))
+        self.slide_object.background.fill.solid()
+        self.slide_object.background.fill.fore_color.rgb = RGBColor(rgb_tuple[0], rgb_tuple[1], rgb_tuple[2])
+
+
+class ShapeColors:
+    SHAPES_TYPES = {
+        1: 'Авто форма',
+        5: 'Свободная форма',
+        6: 'Группа',
+        17: 'Текст бокс',
+        13: 'Картинка',
+        14: 'Заполнитель',
+        16: 'Медиа',
+    }
+
+    def __init__(self, shape_object):
+        self.shape_object = shape_object
+        self.type = self.SHAPES_TYPES[self.shape_object.shape_type]
+        self.color = None
+        self.check_color()
+
+    def check_color(self):
+        if self.shape_object.shape_type in (6, 13, 14, 16):
+            return
+        if self.shape_object.fill.type in (3, 5):
+            return
+        if self.shape_object.fill.fore_color.type == 1:
+            self.color = ImageColor.getcolor("#" + str(self.shape_object.fill.fore_color.rgb),
+                                             "RGB")
+
+    def change_color(self, rgb_tuple):
+        if self.shape_object.shape_type in (6, 13, 14, 16):
+            logger.info('Изменение цвета у данных типов форм невозможно')
+            return
+        logger.info('Изменение цвета формы {}  на цвет {}'.format(self.color, rgb_tuple))
+        self.shape_object.fill.solid()
+        self.shape_object.fill.fore_color.rgb = RGBColor(rgb_tuple[0], rgb_tuple[1], rgb_tuple[2])
 
 
 class PPTColors:
     def __init__(self, ppt_path):
         logger.info('Открытие презентации {}'.format(ppt_path))
         self.ppt = Presentation(pptx=ppt_path)
-        print(self.ppt.slides[0])
+        self.slides = [SlideColors(slide) for slide in self.ppt.slides]
+
+    def save_as(self, file_name):
+        logger.info('Сохранение презентации {}'.format(file_name))
+        self.ppt.save(file_name)
+
+    def show_info(self):
+        info_main = 'Слайд #{}:'
+        info_shade = '\tФормы : {}'
+        info_shade_color = '\tЦвета форм : {}'
+        info_background = '\tФон : {}'
+        for slide in self.slides:
+            print(info_main.format(self.slides.index(slide) + 1))
+            print(info_shade.format([shape.type for shape in slide.shapes]))
+            print(info_shade_color.format([shape.color for shape in slide.shapes]))
+            print(info_background.format('[тип : {}, цвет: {}]'.format(slide.background, slide.background_color)))

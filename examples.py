@@ -1,15 +1,35 @@
 from powerpoint import PPT, PPTColors
 
-
-PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Fashion.pptx'  # исходник
-PPT_CHANGED_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\new.pptx'  # изменённый файл
-
+PPT_PATH = r'D:\Projects\commerce\parser_powerpoint\init_pptx\Fashion.pptx'  # исходник
+PPT_CHANGED_PATH = r'D:\Projects\commerce\parser_powerpoint\init_pptx\new.pptx'  # изменённый файл
 
 """
 Для изменения цветов используется другой модуль,
 т.е отрыть презентацию и одновременно изменить и текст и цвет не получится,
 но можно открыть перзентацию изменить текст, сохранить, потом снова открыть и изменить цвета
 """
+
+
+def show_info():
+    """пример который показывает информацию о презентации"""
+    ppt = PPTColors(PPT_CHANGED_PATH)
+    ppt.show_info()
+
+
+def change_background_color():
+    """пример изменения цвета фона 1 слайда на красный"""
+    ppt = PPTColors(PPT_PATH)
+    red = (255, 0, 0)
+    ppt.slides[0].change_background_color(red)
+    ppt.save_as(PPT_CHANGED_PATH)
+
+
+def change_shape_color():
+    """пример изменения цвета формы на 3 слайде 4 формы на зелёный"""
+    ppt = PPTColors(PPT_PATH)
+    green = (0, 255, 0)
+    ppt.slides[2].shapes[3].change_color(green)
+    ppt.save_as(PPT_CHANGED_PATH)
 
 
 def duplicate_slide():
@@ -70,11 +90,6 @@ def change_speed_example():
     ppt.close()
 
 
-def change_background_color():
-    ppt = PPTColors(PPT_PATH)
-
-
-
-
 if __name__ == '__main__':
-    change_background_color()
+    change_shape_color()
+    show_info()
