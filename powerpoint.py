@@ -54,8 +54,13 @@ class Slide:
         logger.info('Получение картинок слайда №{}'.format(self.id))
         images = []
         for shape in self.slide_com_object.Shapes:
-            if shape.Type == 14:
+            if shape.Type in (14, 11):
                 images.append(ShapeImage(self, shape))
+        for shape in self.slide_com_object.Shapes:
+            if shape.Type == 6:
+                for el in shape.Ungroup():
+                    if el.Type in (14, 11):
+                        images.append(ShapeImage(self, el))
         return images
 
     def get_videos(self):
@@ -156,14 +161,17 @@ class ShapeImage:
         top = self.shape.Top
         width = self.shape.Width
         height = self.shape.Height
+        z_order = self.shape.ZOrderPosition
         self.shape.Delete()
-        self.slide.slide_com_object.Shapes.AddPicture(FileName=image_path,
-                                                      LinkToFile=False,
-                                                      SaveWithDocument=True,
-                                                      Left=left,
-                                                      Top=top,
-                                                      Width=width,
-                                                      Height=height)
+        picture = self.slide.slide_com_object.Shapes.AddPicture(FileName=image_path,
+                                                                LinkToFile=False,
+                                                                SaveWithDocument=True,
+                                                                Left=left,
+                                                                Top=top,
+                                                                Width=width,
+                                                                Height=height)
+        while picture.ZOrderPosition > z_order:
+            picture.ZOrder(3)
 
 
 class ShapeVideo(ShapeMedia):
@@ -188,6 +196,7 @@ class PPT:
     def __init__(self, ppt_path):
         logger.info('Открытие презентации {}'.format(ppt_path))
         self.app = win32com.client.Dispatch("Powerpoint.Application")
+        self.app.Visible = True
         self.ppt_path = ppt_path
         self.ppt_com_object = self.app.Presentations.Open(self.ppt_path)
         self.slides = self.get_slides()
@@ -212,14 +221,18 @@ class PPT:
         logger.info('Сохранение презентации {}'.format(file_name))
         self.ppt_com_object.SaveAs(file_name)
 
-    def create_video(self, mp4_target, resolution = 720,frames = 24,quality = 60):
+    def create_video(self, mp4_target, resolution=720, frames=24, quality=60):
         if os.path.isfile(mp4_target):
             os.remove(mp4_target)
         logger.info('Сохранение видео презентации презентации {}'.format(mp4_target))
         self.ppt_com_object.CreateVideo(mp4_target)
         while True:
-            if os.path.isfile(mp4_target) and os.path.getsize(mp4_target) != 0:
-                break
+            if os.path.isfile(mp4_target):
+                try:
+                    if os.path.getsize(mp4_target) != 0:
+                        break
+                except FileNotFoundError:
+                    continue
 
     def show_info(self):
         info_main = 'Слайд #{}:'
@@ -289,6 +302,7 @@ class ShapeColors:
         13: 'Картинка',
         14: 'Заполнитель',
         16: 'Медиа',
+        None: 'Cоединитель',
     }
 
     def __init__(self, shape_object):
@@ -298,9 +312,9 @@ class ShapeColors:
         self.check_color()
 
     def check_color(self):
-        if self.shape_object.shape_type in (6, 13, 14, 16):
+        if self.shape_object.shape_type in (6, 13, 14, 16, None):
             return
-        if self.shape_object.fill.type in (3, 5):
+        if self.shape_object.fill.type in (3, 5, None):
             return
         if self.shape_object.fill.fore_color.type == 1:
             self.color = ImageColor.getcolor("#" + str(self.shape_object.fill.fore_color.rgb),

@@ -1,13 +1,13 @@
 from powerpoint import PPT
 import win32api
 
-PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Fashion.pptx'  # исходник
+PPT_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\Promo.pptx'  # исходник
 PPT_CHANGED_PATH = r'D:\Project\commerce\parser_powerpoint\init_pptx\new.pptx'  # изменённый файл
 
 
 def show_info():
     """пример который показывает информацию о презентации"""
-    ppt = PPT(PPT_CHANGED_PATH)
+    ppt = PPT(PPT_PATH)
     ppt.show_info()
     ppt.quit()
 
@@ -102,14 +102,14 @@ def change_all_example():
     green = (0, 255, 0)
     ppt.slides[0].change_background_color(red)
     ppt.slides[1].change_background_color(red)
-    ppt.slides[2].shapes[3].change_color(green)
-    ppt.slides[2].texts[0].change_text('ИЗМЕНЁННЫЙ ТЕКСТ')
+    ppt.slides[3].shapes[0].change_color(green)
+    ppt.slides[4].texts[0].change_text('ИЗМЕНЁННЫЙ ТЕКСТ')
     image_path = r'D:\Project\commerce\parser_powerpoint\image.png'
-    ppt.slides[1].images[0].change_image(image_path)
+    ppt.slides[5].images[0].change_image(image_path)
     audio_path = r'D:\Project\commerce\parser_powerpoint\audio.mp3'
     ppt.slides[0].audios[0].change_audio(audio_path)
     video_path = r'D:\Project\commerce\parser_powerpoint\video.avi'
-    ppt.slides[1].videos[0].change_video(video_path)
+    ppt.slides[12].videos[0].change_video(video_path)
     speed_id = 1
     ppt.slides[0].change_speed(speed_id)
     ppt.duplicate_slide(3, 5)
@@ -121,4 +121,7 @@ def change_all_example():
 
 
 if __name__ == '__main__':
-    change_all_example()
+    ppt = PPT(PPT_PATH)
+    ppt.create_video('D:\Project\commerce\parser_powerpoint\presentation.mp4')
+    # ppt.slides[1].images[0].change_image('D:\Project\commerce\parser_powerpoint\image.png')
+    #change_all_example()
