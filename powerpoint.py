@@ -303,6 +303,31 @@ class ShapeColors:
         14: 'Заполнитель',
         16: 'Медиа',
         None: 'Cоединитель',
+        3: 'Chart',
+        30: '3d model',
+        2: 'Callout',
+        20: 'Canvas',
+        4: 'Comment',
+        27: 'Content Office Add-in',
+        21: 'Diagram',
+        7: 'Embedded OLE object',
+        8: 'Form control',
+        28: 'Graphic',
+        24: 'SmartArt graphic',
+        22: 'Ink',
+        23: 'Ink comment',
+        9: 'Line',
+        31: 'Linked 3D model',
+        29: 'Linked graphic',
+        10: 'Linked OLE object',
+        11: 'Linked picture',
+        12: 'OLE control object',
+        18: 'Script anchor',
+        -2: 'Mixed shape type',
+        19: 'Table',
+        15: 'Text effect',
+        26: 'Web video'
+
     }
 
     def __init__(self, shape_object):
