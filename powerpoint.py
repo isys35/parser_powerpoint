@@ -341,6 +341,10 @@ class ShapeColors:
             self.shape_object.fill.type
         except AttributeError:
             return
+        try:
+            self.shape_object.fill.fore_color.type
+        except TypeError:
+            return
         if self.shape_object.fill.fore_color.type == 1:
             self.color = ImageColor.getcolor("#" + str(self.shape_object.fill.fore_color.rgb),
                                              "RGB")
