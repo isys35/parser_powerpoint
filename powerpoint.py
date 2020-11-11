@@ -337,9 +337,9 @@ class ShapeColors:
         self.check_color()
 
     def check_color(self):
-        if self.shape_object.shape_type in (6, 13, 14, 16, None):
-            return
-        if self.shape_object.fill.type in (3, 5, None):
+        try:
+            self.shape_object.fill.type
+        except AttributeError:
             return
         if self.shape_object.fill.fore_color.type == 1:
             self.color = ImageColor.getcolor("#" + str(self.shape_object.fill.fore_color.rgb),
